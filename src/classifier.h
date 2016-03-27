@@ -2,7 +2,10 @@
 #define MY_NBC
 
 #include <iostream>
+#include <string.h>
 #include <vector>
+
+using namespace std;
 
 struct dataSet {
 	int label;
@@ -12,13 +15,19 @@ struct dataSet {
 class NBC {
 public:
 	NBC();
-	NBC(char *);	// 	
+	NBC(const string&);	// 	
 
-	void train(char *);		// Creates decision tree based off training data file
-	void test(char *); 		// Classifies data file
+	// Creates decision tree based off training data file
+	void train(const string&);	
+	// Classifies data file
+	void test(const string&); 		
 
 private:
-	std::vector<dataSet> data; 
+	void readFile(const string&);
+
+	std::vector<dataSet * > dataTable; 
+	std::vector<double> means;
+	std::vector<double> variances;
 };
 
 #endif
