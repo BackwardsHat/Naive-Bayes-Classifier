@@ -36,11 +36,41 @@ void NBC::readFile(const string& fileName) {
 
 	string line;
 
-	while(inFile ) {	
-		inFile >> std::ws;
+	while(inFile >> std::ws) {	
 		getline(inFile, line);
-		std::cout << line  << '\n'; 
-	}
+
+		dataSet * set = new dataSet;
+		size_t pos;
+			
+		// Checks to see if line is valid. 
+		// Valid if format follows: <label> <index>:<int> <index>:<int> ...
+		pos = line.find(':');	
+		if(pos == string::npos)
+		   	break;
+
+		// Prases label from line
+		pos = line.find(' ');
+		if(pos != string::npos)
+			set->label = std::stoi(line.substr(0, pos));	
+
+		// Parse int's after each ':' from line
+		while(pos != string::npos) {
+			pos = line.find(':');
+			// Remove characters up to ':'
+			if(pos != string::npos)
+				line = line.substr(pos+1);
+
+			pos = line.find(' ');
+
+			if(pos != string::npos)
+				set->values.push_back(std::stoi(line.substr(0, pos)));
+		}
+
+		// grab whats left
+		set->values.push_back(std::stoi(line));
+
+		this->dataTable.push_back(set);
+	} // end of while
 
 	inFile.close();
 }
