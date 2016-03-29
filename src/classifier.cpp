@@ -38,6 +38,7 @@ void NBC::readFile(const string& fileName) {
 
 	while(inFile >> std::ws) {	
 		getline(inFile, line);
+		//std::cout << "Line: "<< line << '\n';
 
 		dataSet * set = new dataSet;
 		size_t pos;
@@ -50,26 +51,43 @@ void NBC::readFile(const string& fileName) {
 
 		// Prases label from line
 		pos = line.find(' ');
-		if(pos != string::npos)
+		if(pos != string::npos) {
 			set->label = std::stoi(line.substr(0, pos));	
+			line = line.substr(pos+1);
+		}
 
 		// Parse int's after each ':' from line
 		while(pos != string::npos) {
+			size_t index;
 			pos = line.find(':');
-			// Remove characters up to ':'
-			if(pos != string::npos)
+
+			if(pos != string::npos) {
+				index = std::stoi(line.substr(0,pos)) - 1;				
+				// Remove characters up to ':'
 				line = line.substr(pos+1);
+			}
 
 			pos = line.find(' ');
 
-			if(pos != string::npos)
+			if(pos != string::npos) {
+				while(set->values.size() < index)
+					set->values.push_back(0);
+
 				set->values.push_back(std::stoi(line.substr(0, pos)));
+				line = line.substr(pos+1);
+			}
 		}
 
 		// grab whats left
 		set->values.push_back(std::stoi(line));
-
 		this->dataTable.push_back(set);
+
+		std::cout << set->label << ", ";
+		int i = 0; 
+		for(const auto& val : set->values)
+			std::cout << i++ << ':'<< val << ' ';
+		std::cout << '\n';
+
 	} // end of while
 
 	inFile.close();
