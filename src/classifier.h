@@ -4,12 +4,13 @@
 #include <iostream>
 #include <string.h>
 #include <vector>
+#include <map>
 
 using namespace std;
 
 struct dataSet {
 	int label;
-	std::vector<int> values;
+	vector<int> values;
 };
 
 class NBC {
@@ -23,11 +24,13 @@ public:
 	void test(const string&); 		
 
 private:
-	void readFile(const string&);
+	void readFile(const string&, multimap<int, vector<int> >&);
 
-	std::vector<dataSet * > dataTable; 
-	std::vector<double> means;
-	std::vector<double> variances;
+	multimap<int, vector<int> > trainingSet; 
+	multimap<int, vector<int> > testingSet; 
+	map<int, vector<double> > means;
+	map<int, vector<double> > variances;
+	size_t max_length;
 };
 
 #endif
