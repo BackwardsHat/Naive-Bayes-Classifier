@@ -2,22 +2,25 @@
 #include "classifier.h"
 
 NBC::NBC() {
-	cout << "NBC constructor called\n";
 }
 
-NBC::NBC(const string& fileName) {
-	cout << "NBC char * constructor called\n";
-	train(fileName);
+NBC::NBC(const string& trainingFileName) {
+	train(trainingFileName);
+}	 	
+
+NBC::NBC(const string& trainingFileName, const string& testingFileName) {
+	train(trainingFileName);
+	test(testingFileName);
 }	 	
 
 void NBC::train(const string& fileName) {
 	cout << "NBC train called\n";
 	// Store training set data into memory
 	readFile(fileName, this->trainingSet);
+	classifier(this->trainingSet);
 	
-	cout << "NBC readFile after\n";
 	// calc probabilities
-	
+	/*
 	for(auto it = trainingSet.begin(); it != trainingSet.end(); ++it) {
 		if(means.find(it->first) == means.end())
 			means.insert( make_pair(it->first, vector<double>(max_length, 0.0) ));
@@ -50,42 +53,55 @@ void NBC::train(const string& fileName) {
 	cout << "key\tvalues\n";
 	for(auto it = means.cbegin(); it != means.end(); ++it) {
 		cout << it->first << '\t';
-		for(const auto& j : it->second) 
+		for(const auto& j : it->second)
 			cout << j << ' ';
 		cout << '\n';
-	}
+	} */
+}
+
+void NBC::test(const string& fileName) {
+	readFile(fileName, this->testingSet);
+	classifier(this->testingSet);
 }
 
 // Classifies data file
-void NBC::test(const string& fileName) {
+void NBC::classifier(multimap<int, vector<int> >& myMap ) {
 	cout << "NBC test called\n";
 
 	// Store testing set data into memory
-	readFile(fileName, this->testingSet);
-	
-	int negativeCount = trainingSet.count(-1);
-	int positiveCount = trainingSet.count(1);
+	int negativeCount = myMap.count(-1);
+	int positiveCount = myMap.count(1);
 	double total = negativeCount + positiveCount;
-	double prob_positive_class = trainingSet.count(1) / total;
-	double prob_negative_class = trainingSet.count(-1) / total;
+	double prob_positive_class = myMap.count(1) / total;
+	double prob_negative_class = myMap.count(-1) / total;
 
 	cout << "prob(1): " << prob_positive_class << '\t'
 		 << "prob(-1): " << prob_negative_class << '\n';
 
 	cout << "max_length: " << max_length << '\n';
-	auto placeholder = testingSet.find(1);
-	vector<int> * t = &testingSet.find(1)->second;
+
+	int accuracy = 0;
+	int truePositives = 0, falsePositives = 0,
+	   	trueNegatives = 0, falseNegatives = 0;
+
+	for(auto current = myMap.cbegin();
+		   	current != myMap.cend(); ++current)  {
+	const auto& values = current->second;
 	multimap<int, vector<double> > prob;
-	for(size_t attr = 0; attr < t->size(); ++attr) {
+	int currentLabel = current->first;
+
+	for(size_t attr = 0; attr < values.size(); ++attr) {
 		// find attr given class
-		for(auto set = trainingSet.begin(); set != trainingSet.end(); ++set) {
+		for(auto set = myMap.begin(); set != myMap.end(); ++set) {
+			int setLabel = set->first;
 			// Add new key for unencountered class
-			if(prob.find(set->first) == prob.end())
-				prob.insert(make_pair(set->first, vector<double>(max_length, 1)));
+			if(prob.find(setLabel) == prob.end())
+				prob.insert(make_pair(setLabel, vector<double>(max_length, 0)));
 
-			vector<double> * ptr = &prob.find(set->first)->second;
+			vector<double> * ptr = &prob.find(setLabel)->second;
 
-			if(attr < set->second.size() && t->at(attr) == set->second.at(attr))
+			if(attr < set->second.size()
+				   	&& values.at(attr) == set->second.at(attr))
 				ptr->at(attr) += 1;
 		}
 	}
@@ -103,8 +119,8 @@ void NBC::test(const string& fileName) {
 		pb_pos *= prob.find(1)->second.at(attr);
 	}	
 
+/*
 	cout << "pb_neg: " << pb_neg << "\tpb_pos: " << pb_pos << '\n';
-
 	cout << "test counts\n";
 	for(auto it = prob.cbegin(); it != prob.end(); ++it) {
 		cout << it->first << '\t';
@@ -112,9 +128,23 @@ void NBC::test(const string& fileName) {
 			cout << j << ' ';
 		cout << '\n';
 	}
-
-	cout << "It's " << (pb_neg > pb_pos ? "-1" : "1") << "!\n";
-	cout << "Real answer: " << placeholder->first << '\n';
+*/
+	// Calculate the true/false positives/negatives
+	int choice = pb_neg > pb_pos ? -1 : 1;
+//	cout << "True: " << currentLabel << "   Guess: " << choice
+//		 << "\t" << (currentLabel == choice ? "r" : "w") << '\n';
+	if(currentLabel == choice)
+		accuracy++;
+	if(currentLabel == 1 && choice == 1) truePositives++;
+	if(currentLabel == -1 && choice == 1) falsePositives++;
+	if(currentLabel == -1 && choice == -1) trueNegatives++;
+	if(currentLabel == 1 && choice == -1) falseNegatives++;
+	} // end big for loop
+	cout << "accuracy: " << accuracy/total << '\n';
+	cout << "True Positives: " << truePositives << '\n'
+		 << "False Positives: " << falsePositives << '\n'
+		 << "True Negatives: " << trueNegatives << '\n'
+		 << "False Negatives: " << falseNegatives << '\n';
 }	
 
 void NBC::readFile(const string& fileName, multimap<int, vector<int> >& myMap) { 
