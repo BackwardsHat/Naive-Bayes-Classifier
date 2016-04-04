@@ -6,7 +6,15 @@
 #include <vector>
 #include <map>
 
+
 using namespace std;
+
+
+// data stucture general idea: [key1] -> ([key2] -> ([key3] -> count) )
+// where key1: class label, key2: column number
+//       key3: column value, count: occurences of key3
+typedef multimap<int, map<int, map<int,int> *> *> MyMap;
+typedef vector<vector<int> *> MyArray;
 
 class NBC {
 public:
@@ -18,14 +26,14 @@ public:
 	void test(const string&); 		
 
 private:
-	void readFile(const string&, multimap<int, vector<int> >&);
+	void readFile(const string&, MyArray&, MyMap&);
 	// Attempts to predict class label 
-	void classifier(multimap<int, vector<int> >&);	
+	void classifier(const MyArray&, const MyMap&);	
 
-	multimap<int, vector<int> > trainingSet;  // Holds training data
-	multimap<int, vector<int> > testingSet;	  // Holds data you want to predict
-	map<int, vector<double> > means;
-	map<int, vector<double> > variances;
+	MyArray trainingData;
+	MyArray testingData;
+	MyMap trainingCounts;     // Holds training data
+	MyMap testingCounts;	  // Holds data you want to predict
 	size_t max_length;
 };
 
