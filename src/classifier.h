@@ -30,10 +30,10 @@ private:
 	// Attempts to predict class label 
 	void classifier(const MyArray&, const MyMap&);	
 
-	MyArray trainingData;
+	MyArray trainingData;	  // Holds the data from file 
 	MyArray testingData;
-	MyMap trainingCounts;     // Holds training data
-	MyMap testingCounts;	  // Holds data you want to predict
+	MyMap trainingCounts;     // Holds training occurence
+	MyMap testingCounts;	  // Isn't used, but like having it
 	size_t max_length;
 };
 

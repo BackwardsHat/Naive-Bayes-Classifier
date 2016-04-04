@@ -1,4 +1,4 @@
-CC=clang++
+CC=g++
 CFLAGS=-Wall -O3 -std=c++11
 PROG=NaiveBayes
 ARGS1=./test/breast_cancer.train ./test/breast_cancer.test 

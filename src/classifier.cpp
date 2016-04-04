@@ -2,13 +2,16 @@
 #include "classifier.h"
 
 NBC::NBC() {
+	max_length = 0;
 }
 
 NBC::NBC(const string& trainingFileName) {
+	NBC();
 	train(trainingFileName);
 }	 	
 
 NBC::NBC(const string& trainingFileName, const string& testingFileName) {
+	NBC();
 	train(trainingFileName);
 	test(testingFileName);
 }	 	
@@ -20,8 +23,9 @@ void NBC::train(const string& fileName) {
 }
 
 void NBC::test(const string& fileName) {
-	readFile(fileName, this->testingData, this->testingCounts);
-	classifier(this->testingData, this->testingCounts);
+	readFile(fileName, this->testingData, this->testingCounts); 
+	// Uses training map instead of the testing map
+	classifier(this->testingData, this->trainingCounts);
 }
 
 // Classifies given data 
@@ -38,52 +42,41 @@ void NBC::classifier(const MyArray& myArray, const MyMap& myMap) {
 	int accuracy = 0;
 	int truePositives = 0, falsePositives = 0,
 	   	trueNegatives = 0, falseNegatives = 0;
-
+/*
 	cout << "\n\nprob(-1): " << prob_negative_class 
 		 << "\ttotal(-1): " << negativeCount << '\n'
 		 << "prob(1): " << prob_positive_class
 		 << "\ttotal(1): " << positiveCount << "\n\n";
+ */
 
 	// Loops through each set of data and calculate the probability
 	//   of each attribute for each class
 	size_t length = myArray.size();
 	for(size_t pos = 0; pos < length; ++pos)  {
-		vector<double> probNeg(max_length, 0);	// Holds the probablity of each attr
-		vector<double> probPos(max_length, 0);
+		vector<double> colCount_Neg(max_length-1, 1);	// Holds the probablity of each attr
+		vector<double> colCount_Pos(max_length-1, 1);
 		int currentLabel = myArray[pos]->at(0);
 
-		// 
+		// Collecting counts from each class
 		size_t width = myArray[pos]->size();
 		for(size_t col = 1; col < width; ++col) {
 			int currentVal = myArray[pos]->at(col);
 
-			// TODO: check for unindexed values
+			// TODO (maybe): check for unindexed values
 			
-			if(currentVal != 0) { 	
-				probNeg.at(col-1) += myMap.find(-1)->second->find(col)->second->find(currentVal)->second;
-				probPos.at(col-1) += myMap.find(1)->second->find(col)->second->find(currentVal)->second;
-			}	
+			colCount_Neg.at(col-1) += myMap.find(-1)->second->find(col)->second->find(currentVal)->second;
+			colCount_Pos.at(col-1) += myMap.find(1)->second->find(col)->second->find(currentVal)->second;
 		}
 
 		// P(X | C)
 		double pb_neg = prob_negative_class;
 		double pb_pos = prob_positive_class;
 
-		//cout << "column results\n";
-		//cout << "negatives: ";
-		for(size_t col = 0; col < (max_length-1); ++col) { 
-		//	cout << probNeg[col] << ' ';
-			probNeg[col] /= negativeCount;
-			pb_neg *= probNeg[col];
+		size_t size = colCount_Neg.size();
+		for(size_t col = 0; col < size; ++col) { 
+			pb_neg *= colCount_Neg.at(col) / (double) negativeCount;
+			pb_pos *= colCount_Pos.at(col) / (double) positiveCount;
 		}
-		
-		//cout << "\npositives: ";
-		for(size_t col = 0; col < (max_length-1); ++col) { 
-			//cout << probPos[col] << ' ';
-			probPos[col] /= positiveCount;
-			pb_pos *= probPos[col];
-		}
-		//cout << '\n';
 		
 		// Calculate the true/false positives/negatives
 		int predicted_label = pb_neg > pb_pos ? -1 : 1;
@@ -96,13 +89,8 @@ void NBC::classifier(const MyArray& myArray, const MyMap& myMap) {
 		if(currentLabel == 1  && predicted_label == -1) falseNegatives++;
 		} // end of long for loop
 
-	cout << "accuracy: " << accuracy/total << '\n';
-/*	cout << "True Positives: " << truePositives << '\n'
-		 << "False Positives: " << falsePositives << '\n'
-		 << "True Negatives: " << trueNegatives << '\n'
-		 << "False Negatives: " << falseNegatives << '\n';
-*/
 	// Output results
+	//	cout << "accuracy: " << accuracy/total << '\n';
 	cout << truePositives  << ' ' << falseNegatives << ' '
 		 << falsePositives << ' ' << trueNegatives  << '\n';
 }	
@@ -141,7 +129,7 @@ void NBC::readFile(const string& fileName, MyArray& myArray, MyMap& myMap) {
 
 		// Parse int's after each ':' from line
 		while(pos != string::npos) {
-			size_t index;
+			size_t index = 0;
 			pos = line.find(':');
 			if(pos != string::npos) {
 				index = stoi(line.substr(0,pos)) - 1;				
@@ -171,7 +159,8 @@ void NBC::readFile(const string& fileName, MyArray& myArray, MyMap& myMap) {
 
 		//cout << "label: " << label << '\n';
 		//cout << "class\tcol\tvalue\tcount\n";
-		// Insert values into hash 
+		
+		// Insert values into map 
 		size_t length = values->size();
 		for(size_t col = 1; col < length; ++col) {
 			int val = values->at(col);
